@@ -1,4 +1,4 @@
-import {Blockchain} from "./Blockchain";
+import { Blockchain } from "./Blockchain";
 import {
     Account,
     Address,
@@ -12,7 +12,7 @@ import {
     Transaction,
     TupleItem, TupleReader
 } from "@ton/core";
-import {getSelectorForMethod} from "../utils/selector";
+import { getSelectorForMethod } from "../utils/selector";
 import { EmulationResult, ExecutorVerbosity, RunCommonArgs, TickOrTock } from "../executor/Executor";
 
 export function createShardAccount(args: { address?: Address, code: Cell, data: Cell, balance: bigint, workchain?: number }): ShardAccount {
@@ -272,8 +272,8 @@ export class SmartContract {
         }))
     }
 
-    protected runCommon(run: () => EmulationResult): SmartContractTransaction {
-        const res = run()
+    protected async runCommon(run: () => Promise<EmulationResult>): Promise<SmartContractTransaction> {
+        const res = await run()
 
         if (this.verbosity.print && this.verbosity.blockchainLogs && res.logs.length > 0) {
             console.log(res.logs)
@@ -305,12 +305,12 @@ export class SmartContract {
         }
     }
 
-    get(method: string | number, stack: TupleItem[] = [], params?: GetMethodParams): GetMethodResult {
+    async get(method: string | number, stack: TupleItem[] = [], params?: GetMethodParams): Promise<GetMethodResult> {
         if (this.account.account?.storage.state.type !== 'active') {
             throw new Error('Trying to run get method on non-active contract')
         }
 
-        const res = this.blockchain.executor.runGetMethod({
+        const res = await this.blockchain.executor.runGetMethod({
             code: this.account.account?.storage.state.state.code!,
             data: this.account.account?.storage.state.state.data!,
             methodId: typeof method === 'string' ? getSelectorForMethod(method) : method,

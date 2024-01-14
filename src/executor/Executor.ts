@@ -1,5 +1,5 @@
-import {Address, Cell, serializeTuple, TupleItem} from "@ton/core";
-import {base64Decode} from "../utils/base64";
+import { Address, Cell, serializeTuple, TupleItem } from "@ton/core";
+import { base64Decode } from "../utils/base64";
 const EmulatorModule = require('./emulator-emscripten.js');
 
 export type GetMethodArgs = {
@@ -228,7 +228,7 @@ export class Executor {
         return ex
     }
 
-    runGetMethod(args: GetMethodArgs): GetMethodResult {
+    async runGetMethod(args: GetMethodArgs): Promise<GetMethodResult> {
         const params: GetMethodInternalParams = {
             code: args.code.toBoc().toString('base64'),
             data: args.data.toBoc().toString('base64'),
@@ -265,7 +265,7 @@ export class Executor {
         };
     }
 
-    private runCommon(args: (string | number)[]): EmulationResult {
+    private async runCommon(args: (string | number)[]): Promise<EmulationResult> {
         this.debugLogs = []
         const resp = JSON.parse(this.extractString(this.invoke('_emulate', args)))
         const debugLogs = this.debugLogs.join('\n')
@@ -299,7 +299,7 @@ export class Executor {
         };
     }
 
-    runTickTock(args: RunTickTockArgs): EmulationResult {
+    async runTickTock(args: RunTickTockArgs): Promise<EmulationResult> {
         const params: EmulationInternalParams = {
             ...runCommonArgsToInternalParams(args),
             is_tick_tock: true,
@@ -315,7 +315,7 @@ export class Executor {
         ])
     }
 
-    runTransaction(args: RunTransactionArgs): EmulationResult {
+    async runTransaction(args: RunTransactionArgs): Promise<EmulationResult> {
         const params: EmulationInternalParams = runCommonArgsToInternalParams(args)
 
         return this.runCommon([

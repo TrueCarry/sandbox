@@ -1,7 +1,7 @@
 import { defaultConfig } from "../config/defaultConfig";
-import {Address, Cell, Message, Transaction, ContractProvider, Contract, Sender, toNano, loadMessage, ShardAccount, TupleItem, ExternalAddress, StateInit} from "@ton/core";
-import {Executor, TickOrTock} from "../executor/Executor";
-import {BlockchainStorage, LocalBlockchainStorage} from "./BlockchainStorage";
+import { Address, Cell, Message, Transaction, ContractProvider, Contract, Sender, toNano, loadMessage, ShardAccount, TupleItem, ExternalAddress, StateInit } from "@ton/core";
+import { Executor, TickOrTock } from "../executor/Executor";
+import { BlockchainStorage, LocalBlockchainStorage } from "./BlockchainStorage";
 import { extractEvents, Event } from "../event/Event";
 import { BlockchainContractProvider, SandboxContractProvider } from "./BlockchainContractProvider";
 import { BlockchainSender } from "./BlockchainSender";
@@ -54,12 +54,12 @@ type ExtendsContractProvider<T> = T extends ContractProvider ? true : (T extends
 
 export type SandboxContract<F> = {
     [P in keyof F]: P extends `get${string}`
-        ? (F[P] extends (x: infer CP, ...args: infer P) => infer R ? (ExtendsContractProvider<CP> extends true ? (...args: P) => R : never) : never)
-        : (P extends `send${string}`
-            ? (F[P] extends (x: infer CP, ...args: infer P) => infer R ? (ExtendsContractProvider<CP> extends true ? (...args: P) => Promise<SendMessageResult & {
-                result: R extends Promise<infer PR> ? PR : R
-            }> : never) : never)
-            : F[P]);
+    ? (F[P] extends (x: infer CP, ...args: infer P) => infer R ? (ExtendsContractProvider<CP> extends true ? (...args: P) => R : never) : never)
+    : (P extends `send${string}`
+        ? (F[P] extends (x: infer CP, ...args: infer P) => infer R ? (ExtendsContractProvider<CP> extends true ? (...args: P) => Promise<SendMessageResult & {
+            result: R extends Promise<infer PR> ? PR : R
+        }> : never) : never)
+        : F[P]);
 }
 
 export type PendingMessage = (({
@@ -229,7 +229,7 @@ export class Blockchain {
         })
     }
 
-    protected async runQueue(params?: MessageParams): Promise<SendMessageResult>  {
+    protected async runQueue(params?: MessageParams): Promise<SendMessageResult> {
         const txes = await this.processQueue(params)
         return {
             transactions: txes,
@@ -257,10 +257,10 @@ export class Blockchain {
                 }
 
                 this.currentLt += LT_ALIGN
-                tx = (await this.getContract(message.info.dest)).receiveMessage(message, params)
+                tx = await (await this.getContract(message.info.dest)).receiveMessage(message, params)
             } else {
                 this.currentLt += LT_ALIGN
-                tx = (await this.getContract(message.on)).runTickTock(message.which, params)
+                tx = await (await this.getContract(message.on)).runTickTock(message.which, params)
             }
 
             const transaction: BlockchainTransaction = {

@@ -1,10 +1,10 @@
-import {Blockchain, BlockchainTransaction} from "./Blockchain";
-import {Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Message, Sender, storeTransaction, toNano} from "@ton/core";
-import {compareTransaction, flattenTransaction, randomAddress} from "@ton/test-utils";
-import {TonClient4} from "@ton/ton";
-import {RemoteBlockchainStorage, wrapTonClient4ForRemote} from "./BlockchainStorage";
-import {prettyLogTransactions} from "../utils/prettyLogTransaction";
-import {printTransactionFees} from "../utils/printTransactionFees";
+import { Blockchain, BlockchainTransaction } from "./Blockchain";
+import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Message, Sender, storeTransaction, toNano } from "@ton/core";
+import { compareTransaction, flattenTransaction, randomAddress } from "@ton/test-utils";
+import { TonClient4 } from "@ton/ton";
+import { RemoteBlockchainStorage, wrapTonClient4ForRemote } from "./BlockchainStorage";
+import { prettyLogTransactions } from "../utils/prettyLogTransaction";
+import { printTransactionFees } from "../utils/printTransactionFees";
 import { createShardAccount, GetMethodError, TimeError } from "./SmartContract";
 import { internal } from "../utils/message";
 import { SandboxContractProvider } from "./BlockchainContractProvider";
@@ -50,7 +50,7 @@ describe('Blockchain', () => {
         printTransactionFees(res.transactions)
 
         let nft = await blockchain.getContract(Address.parse('EQDTbyyOixs9JsO8bmHjk9WJYN8deL-qJeNZvWx147pM8qeO'))
-        let data = nft.get('get_nft_data')
+        let data = await nft.get('get_nft_data')
 
         let [, , , owner] = [data.stackReader.pop(), data.stackReader.pop(), data.stackReader.pop(), data.stackReader.readAddress()]
 
@@ -187,7 +187,7 @@ describe('Blockchain', () => {
         })
 
         class NowTest implements Contract {
-            constructor(readonly address: Address) {}
+            constructor(readonly address: Address) { }
 
             async sendTest(provider: ContractProvider, sender: Sender, answerTo: Address) {
                 await provider.internal(sender, {
@@ -218,7 +218,7 @@ describe('Blockchain', () => {
         // Current time in receiveMessage should match blockchain.now
         const nowSmc = await blockchain.getContract(contract.address)
 
-        let smcRes = nowSmc.receiveMessage(internal({
+        let smcRes = await nowSmc.receiveMessage(internal({
             from: sender.address,
             to: nowSmc.address,
             body: beginCell().storeUint(0, 32).storeAddress(sender.address).endCell(),
@@ -234,12 +234,12 @@ describe('Blockchain', () => {
 
         // Make sure now is still overridable in receiveMessage call
 
-        smcRes = nowSmc.receiveMessage(internal({
+        smcRes = await nowSmc.receiveMessage(internal({
             from: sender.address,
             to: nowSmc.address,
             body: beginCell().storeUint(0, 32).storeAddress(sender.address).endCell(),
             value: toNano('1')
-        }), {now: 4})
+        }), { now: 4 })
 
         expect(smcRes.now).toBe(4)
         expect(smcRes.outMessagesCount).toBe(1)
@@ -249,7 +249,7 @@ describe('Blockchain', () => {
         expect(respMsg.body.beginParse().skip(32).preloadUint(32)).toEqual(4)
     })
 
-    it('execution result in step by step mode should match one in regular mode', async() => {
+    it('execution result in step by step mode should match one in regular mode', async () => {
         // Bounces are the most common case where step by step execution makes sense, so let's do the same test in step by step.
 
         const blockchain = await Blockchain.create()
@@ -279,13 +279,13 @@ describe('Blockchain', () => {
             bounce: true,
             body,
         })
-        const res  = await blockchain.sendMessage(testMsg)
+        const res = await blockchain.sendMessage(testMsg)
         // Rolling back
         await blockchain.loadFrom(prevState)
         // Get iterable insead of iterator
         const iter = await blockchain.sendMessageIter(testMsg)
 
-        const stepByStepResults : BlockchainTransaction[] = []
+        const stepByStepResults: BlockchainTransaction[] = []
 
         for await (const tx of iter) {
             stepByStepResults.push(tx)
@@ -293,7 +293,7 @@ describe('Blockchain', () => {
         // Length should match
         expect(stepByStepResults.length).toEqual(res.transactions.length)
         // Transactions order and content should match
-        for(let i = 0; i < res.transactions.length; i++) {
+        for (let i = 0; i < res.transactions.length; i++) {
             expect(compareTransaction(flattenTransaction(res.transactions[i]), flattenTransaction(stepByStepResults[i]))).toBe(true)
         }
     })
@@ -589,7 +589,7 @@ describe('Blockchain', () => {
         const blockchain = await Blockchain.create()
         const code = Cell.fromBase64('te6ccgEBBAEANwABFP8A9KQT9LzyyAsBAgEgAgMAAtIAP6X//38QGDgpgEAMZGWC/BRnixD9AWW1ZY/ln+S5/YBA')
         const data = beginCell().endCell()
-        const testAddr = contractAddress(-1, {code, data})
+        const testAddr = contractAddress(-1, { code, data })
         await blockchain.setShardAccount(testAddr, createShardAccount({
             address: testAddr,
             code,
@@ -598,11 +598,11 @@ describe('Blockchain', () => {
         }))
 
         const smc = await blockchain.getContract(testAddr)
-        let res = smc.runTickTock('tock')
+        let res = await smc.runTickTock('tock')
         if (res.description.type !== 'tick-tock')
             throw new Error('Tick tock transaction expected')
         expect(res.description.isTock).toBe(true)
-        res = smc.runTickTock('tick')
+        res = await smc.runTickTock('tick')
         if (res.description.type !== 'tick-tock')
             throw new Error('Tick tock transaction expected')
         expect(res.description.isTock).toBe(false)
@@ -610,7 +610,7 @@ describe('Blockchain', () => {
 
     it('should chain tick tock transaction output', async () => {
         class TestWrapper implements Contract {
-            constructor(readonly address: Address) {}
+            constructor(readonly address: Address) { }
             sendTickTock(provider: SandboxContractProvider, which: TickOrTock) {
                 return provider.tickTock(which)
             }
@@ -618,7 +618,7 @@ describe('Blockchain', () => {
         const blockchain = await Blockchain.create()
         const code = Cell.fromBase64('te6ccgEBBAEANwABFP8A9KQT9LzyyAsBAgEgAgMAAtIAP6X//38QGDgpgEAMZGWC/BRnixD9AWW1ZY/ln+S5/YBA')
         const data = beginCell().endCell()
-        const testAddr = contractAddress(-1, {code, data})
+        const testAddr = contractAddress(-1, { code, data })
         await blockchain.setShardAccount(testAddr, createShardAccount({
             address: testAddr,
             code,
