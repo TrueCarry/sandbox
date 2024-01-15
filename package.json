@@ -1,6 +1,6 @@
 {
-  "name": "@ton/sandbox",
-  "version": "0.15.0",
+  "name": "@truecarry/sandbox",
+  "version": "1.0.0",
   "description": "TON transaction emulator",
   "main": "dist/index.js",
   "license": "MIT",
@@ -33,7 +33,7 @@
     "wasm:pack": "ts-node ./scripts/pack-wasm.ts",
     "wasm:copy": "copyfiles -f src/executor/emulator-emscripten.js src/executor/emulator-emscripten.wasm.js ./dist/executor/.",
     "test": "yarn wasm:pack && yarn jest src",
-    "build": "rimraf dist && yarn wasm:pack && tsc && yarn wasm:copy",
+    "build": "rimraf dist && yarn wasm:pack && yarn test && tsc && yarn wasm:copy",
     "config:pack": "ts-node ./scripts/pack-config.ts"
   },
   "packageManager": "yarn@3.6.1",
