@@ -205,7 +205,15 @@ class Heap {
     }
 }
 
-export class Executor {
+export declare class IExecutor {
+    static create(): Promise<Executor>;
+    runGetMethod(args: GetMethodArgs): Promise<GetMethodResult>;
+    runTickTock(args: RunTickTockArgs): Promise<EmulationResult>;
+    runTransaction(args: RunTransactionArgs): Promise<EmulationResult>;
+    invoke(method: string, args: (number | string)[]): number;
+}
+
+export class Executor implements IExecutor {
     private module: any
     private heap: Heap
     private emulator?: {

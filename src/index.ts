@@ -13,11 +13,12 @@ export {
     ExternalOutInfo,
     BlockchainConfig,
     BlockchainSnapshot,
+    IBlockchain,
 } from './blockchain/BlockchainBase';
 
 export {
-    BlockchainSync
-} from './blockchain/BlockchainSync';
+    Blockchain
+} from './blockchain/Blockchain';
 
 export {
     BlockchainWithExecutor
@@ -58,6 +59,7 @@ export {
 
 export type {
     TickOrTock,
+    IExecutor,
 } from './executor/Executor';
 
 export {

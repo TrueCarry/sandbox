@@ -1,6 +1,6 @@
 import { defaultConfig } from "../config/defaultConfig";
 import { Address, Cell, Message, Transaction, ContractProvider, Contract, Sender, toNano, loadMessage, ShardAccount, TupleItem, ExternalAddress, StateInit } from "@ton/core";
-import type { Executor, TickOrTock } from "../executor/Executor";
+import type { IExecutor, TickOrTock } from "../executor/Executor";
 import { BlockchainStorage, LocalBlockchainStorage } from "./BlockchainStorage";
 import { extractEvents, Event } from "../event/Event";
 import { BlockchainContractProvider, SandboxContractProvider } from "./BlockchainContractProvider";
@@ -104,7 +104,40 @@ export type BlockchainSnapshot = {
     nextCreateWalletIndex: number
 }
 
-export class BlockchainBase {
+export declare class IBlockchain {
+    readonly executor: IExecutor;
+    snapshot(): BlockchainSnapshot;
+    loadFrom(snapshot: BlockchainSnapshot): Promise<void>;
+    get now(): number | undefined;
+    set now(now: number | undefined);
+    get lt(): bigint;
+
+    get config(): Cell;
+    get configBase64(): string;
+    sendMessage(message: Message | Cell, params?: MessageParams): Promise<SendMessageResult>;
+    sendMessageIter(message: Message | Cell, params?: MessageParams): Promise<AsyncIterator<BlockchainTransaction> & AsyncIterable<BlockchainTransaction>>;
+    runTickTock(on: Address | Address[], which: TickOrTock, params?: MessageParams): Promise<SendMessageResult>;
+    runGetMethod(address: Address, method: number | string, stack?: TupleItem[], params?: GetMethodParams): Promise<import("./SmartContract").GetMethodResult>;
+
+    provider(address: Address, init?: {
+        code: Cell;
+        data: Cell;
+    }): ContractProvider;
+    sender(address: Address): Sender;
+    treasury(seed: string, params?: TreasuryParams): Promise<SandboxContract<TreasuryContract>>;
+    createWallets(n: number, params?: TreasuryParams): Promise<SandboxContract<TreasuryContract>[]>;
+    openContract<T extends Contract>(contract: T): SandboxContract<T>;
+    getContract(address: Address): Promise<SmartContract>;
+    get verbosity(): LogsVerbosity;
+    set verbosity(value: LogsVerbosity);
+    setVerbosityForAddress(address: Address, verbosity: Partial<LogsVerbosity> | Verbosity | undefined): Promise<void>;
+    setConfig(config: BlockchainConfig): void;
+    setShardAccount(address: Address, account: ShardAccount): Promise<void>;
+    get libs(): Cell | undefined;
+    set libs(value: Cell | undefined);
+}
+
+export class BlockchainBase implements IBlockchain {
     protected storage: BlockchainStorage
     protected networkConfig: string
     protected currentLt = 0n
@@ -121,7 +154,7 @@ export class BlockchainBase {
     protected contractFetches = new Map<string, Promise<SmartContract>>()
     protected nextCreateWalletIndex = 0
 
-    readonly executor: Executor
+    readonly executor: IExecutor
 
     snapshot(): BlockchainSnapshot {
         return {
@@ -162,7 +195,7 @@ export class BlockchainBase {
         return this.currentLt
     }
 
-    protected constructor(opts: { executor: Executor, config?: BlockchainConfig, storage: BlockchainStorage }) {
+    protected constructor(opts: { executor: IExecutor, config?: BlockchainConfig, storage: BlockchainStorage }) {
         this.networkConfig = blockchainConfigToBase64(opts.config)
         this.executor = opts.executor
         this.storage = opts.storage
@@ -478,23 +511,4 @@ export class BlockchainBase {
     set libs(value: Cell | undefined) {
         this.globalLibs = value
     }
-
-    // static async create(opts?: { config?: BlockchainConfig, storage?: BlockchainStorage, executor?: Executor }) {
-    //     const executor = opts?.executor ?? await (await import('../executor/Executor')).Executor.create()
-    //     // const executor = opts?.executor!
-    //     return new Blockchain({
-    //         executor,
-    //         storage: opts?.storage ?? new LocalBlockchainStorage(),
-    //         ...opts
-    //     })
-    // }
-
-    // static async createWithExecutor(executor: Executor, opts?: { config?: BlockchainConfig, storage?: BlockchainStorage,  }) {
-    //     // const executor = opts?.executor!
-    //     return new Blockchain({
-    //         executor,
-    //         storage: opts?.storage ?? new LocalBlockchainStorage(),
-    //         ...opts
-    //     })
-    // }
 }
