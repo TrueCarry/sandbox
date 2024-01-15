@@ -1,4 +1,4 @@
-import type { BlockchainBase } from "./BlockchainBase";
+import type { IBlockchain } from "./BlockchainBase";
 import {
     Account,
     Address,
@@ -154,13 +154,13 @@ export type SmartContractSnapshot = {
 
 export class SmartContract {
     readonly address: Address
-    readonly blockchain: BlockchainBase
+    readonly blockchain: IBlockchain
     #account: string
     #parsedAccount?: ShardAccount
     #lastTxTime: number
     #verbosity?: Partial<LogsVerbosity>
 
-    constructor(shardAccount: ShardAccount, blockchain: BlockchainBase) {
+    constructor(shardAccount: ShardAccount, blockchain: IBlockchain) {
         this.address = shardAccount.account!.addr
         this.#account = beginCell().store(storeShardAccount(shardAccount)).endCell().toBoc().toString('base64')
         this.#parsedAccount = shardAccount
@@ -225,11 +225,11 @@ export class SmartContract {
         this.#lastTxTime = account.account?.storageStats.lastPaid ?? 0
     }
 
-    static create(blockchain: BlockchainBase, args: { address: Address, code: Cell, data: Cell, balance: bigint }) {
+    static create(blockchain: IBlockchain, args: { address: Address, code: Cell, data: Cell, balance: bigint }) {
         return new SmartContract(createShardAccount(args), blockchain)
     }
 
-    static empty(blockchain: BlockchainBase, address: Address) {
+    static empty(blockchain: IBlockchain, address: Address) {
         return new SmartContract(createEmptyShardAccount(address), blockchain)
     }
 
