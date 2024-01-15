@@ -1,4 +1,4 @@
-import { Blockchain, BlockchainTransaction } from "./Blockchain";
+import { BlockchainBase, BlockchainTransaction } from "./BlockchainBase";
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Message, Sender, storeTransaction, toNano } from "@ton/core";
 import { compareTransaction, flattenTransaction, randomAddress } from "@ton/test-utils";
 import { TonClient4 } from "@ton/ton";
@@ -9,6 +9,7 @@ import { createShardAccount, GetMethodError, TimeError } from "./SmartContract";
 import { internal } from "../utils/message";
 import { SandboxContractProvider } from "./BlockchainContractProvider";
 import { TickOrTock } from "../executor/Executor";
+import {BlockchainSync} from './BlockchainSync'
 
 describe('Blockchain', () => {
     jest.setTimeout(30000)
@@ -18,7 +19,7 @@ describe('Blockchain', () => {
             endpoint: 'https://mainnet-v4.tonhubapi.com'
         })
 
-        let blockchain = await Blockchain.create({
+        let blockchain = await BlockchainSync.create({
             storage: new RemoteBlockchainStorage(wrapTonClient4ForRemote(client), 34892000)
         })
 
@@ -58,7 +59,7 @@ describe('Blockchain', () => {
     })
 
     it('should print debug logs', async () => {
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
 
         const testAddress = randomAddress()
 
@@ -94,7 +95,7 @@ describe('Blockchain', () => {
     })
 
     it('should preinitialize treasury', async () => {
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
 
         const treasury = await blockchain.treasury('')
 
@@ -102,7 +103,7 @@ describe('Blockchain', () => {
     })
 
     it('should have non-empty bounce bodies', async () => {
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
 
         const address = randomAddress()
 
@@ -135,7 +136,7 @@ describe('Blockchain', () => {
     })
 
     it('should correctly override now', async () => {
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
 
         const address = randomAddress()
 
@@ -252,7 +253,7 @@ describe('Blockchain', () => {
     it('execution result in step by step mode should match one in regular mode', async () => {
         // Bounces are the most common case where step by step execution makes sense, so let's do the same test in step by step.
 
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
 
         const address = randomAddress()
 
@@ -299,7 +300,7 @@ describe('Blockchain', () => {
     })
 
     it('should correctly return treasury balance', async () => {
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
 
         const treasury = await blockchain.treasury('treasury')
 
@@ -315,7 +316,7 @@ describe('Blockchain', () => {
     })
 
     it('should throw on failed get methods', async () => {
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
 
         const address = randomAddress()
 
@@ -339,7 +340,7 @@ describe('Blockchain', () => {
     })
 
     it('should return externals', async () => {
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
 
         const address = randomAddress()
 
@@ -363,7 +364,7 @@ describe('Blockchain', () => {
     })
 
     it('should throw a special exception when running a tx in the past', async () => {
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
 
         const address = randomAddress()
 
@@ -403,7 +404,7 @@ describe('Blockchain', () => {
     })
 
     it('should create wallets', async () => {
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
 
         const [wallet1, wallet2, wallet3] = await blockchain.createWallets(3)
 
@@ -446,7 +447,7 @@ describe('Blockchain', () => {
     })
 
     it('should work with slim config', async () => {
-        const blockchain = await Blockchain.create({ config: 'slim' })
+        const blockchain = await BlockchainSync.create({ config: 'slim' })
 
         const code = Cell.fromBase64('te6ccgEBAgEALQABFP8A9KQT9LzyyAsBADzTE18D0NMDMfpAMHCAGMjLBVjPFiH6AstqyYBA+wA=')
         const data = new Cell()
@@ -475,7 +476,7 @@ describe('Blockchain', () => {
     })
 
     it('should give same transactions after restoring from snapshot', async () => {
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
 
         blockchain.now = 1000
 
@@ -523,7 +524,7 @@ describe('Blockchain', () => {
     })
 
     it('should send coins from treasury after snapshot restore', async () => {
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
 
         const sender = await blockchain.treasury('sender')
 
@@ -586,7 +587,7 @@ describe('Blockchain', () => {
           send_raw_message(msg.end_cell(), 3);
         }
         */
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
         const code = Cell.fromBase64('te6ccgEBBAEANwABFP8A9KQT9LzyyAsBAgEgAgMAAtIAP6X//38QGDgpgEAMZGWC/BRnixD9AWW1ZY/ln+S5/YBA')
         const data = beginCell().endCell()
         const testAddr = contractAddress(-1, { code, data })
@@ -615,7 +616,7 @@ describe('Blockchain', () => {
                 return provider.tickTock(which)
             }
         }
-        const blockchain = await Blockchain.create()
+        const blockchain = await BlockchainSync.create()
         const code = Cell.fromBase64('te6ccgEBBAEANwABFP8A9KQT9LzyyAsBAgEgAgMAAtIAP6X//38QGDgpgEAMZGWC/BRnixD9AWW1ZY/ln+S5/YBA')
         const data = beginCell().endCell()
         const testAddr = contractAddress(-1, { code, data })

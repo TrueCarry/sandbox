@@ -1,6 +1,6 @@
 import { defaultConfig } from "../config/defaultConfig";
 import { Address, Cell, Message, Transaction, ContractProvider, Contract, Sender, toNano, loadMessage, ShardAccount, TupleItem, ExternalAddress, StateInit } from "@ton/core";
-import { Executor, TickOrTock } from "../executor/Executor";
+import type { Executor, TickOrTock } from "../executor/Executor";
 import { BlockchainStorage, LocalBlockchainStorage } from "./BlockchainStorage";
 import { extractEvents, Event } from "../event/Event";
 import { BlockchainContractProvider, SandboxContractProvider } from "./BlockchainContractProvider";
@@ -104,7 +104,7 @@ export type BlockchainSnapshot = {
     nextCreateWalletIndex: number
 }
 
-export class Blockchain {
+export class BlockchainBase {
     protected storage: BlockchainStorage
     protected networkConfig: string
     protected currentLt = 0n
@@ -479,11 +479,22 @@ export class Blockchain {
         this.globalLibs = value
     }
 
-    static async create(opts?: { config?: BlockchainConfig, storage?: BlockchainStorage }) {
-        return new Blockchain({
-            executor: await Executor.create(),
-            storage: opts?.storage ?? new LocalBlockchainStorage(),
-            ...opts
-        })
-    }
+    // static async create(opts?: { config?: BlockchainConfig, storage?: BlockchainStorage, executor?: Executor }) {
+    //     const executor = opts?.executor ?? await (await import('../executor/Executor')).Executor.create()
+    //     // const executor = opts?.executor!
+    //     return new Blockchain({
+    //         executor,
+    //         storage: opts?.storage ?? new LocalBlockchainStorage(),
+    //         ...opts
+    //     })
+    // }
+
+    // static async createWithExecutor(executor: Executor, opts?: { config?: BlockchainConfig, storage?: BlockchainStorage,  }) {
+    //     // const executor = opts?.executor!
+    //     return new Blockchain({
+    //         executor,
+    //         storage: opts?.storage ?? new LocalBlockchainStorage(),
+    //         ...opts
+    //     })
+    // }
 }
