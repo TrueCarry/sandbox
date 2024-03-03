@@ -205,12 +205,10 @@ class Heap {
     }
 }
 
-export declare class IExecutor {
-    static create(): Promise<Executor>;
-    runGetMethod(args: GetMethodArgs): Promise<GetMethodResult>;
-    runTickTock(args: RunTickTockArgs): Promise<EmulationResult>;
-    runTransaction(args: RunTransactionArgs): Promise<EmulationResult>;
-    invoke(method: string, args: (number | string)[]): number;
+export interface IExecutor {
+    runGetMethod(args: GetMethodArgs): Promise<GetMethodResult>
+    runTickTock(args: RunTickTockArgs): Promise<EmulationResult>
+    runTransaction(args: RunTransactionArgs): Promise<EmulationResult>
 }
 
 export class Executor implements IExecutor {

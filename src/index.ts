@@ -5,6 +5,8 @@ export {
 
 export {
     BlockchainBase,
+    // Blockchain,
+    toSandboxContract,
     SendMessageResult,
     BlockchainTransaction,
     PendingMessage,
@@ -60,6 +62,13 @@ export {
 export type {
     TickOrTock,
     IExecutor,
+    Executor,
+    GetMethodArgs as ExecutorGetMethodArgs,
+    GetMethodResult as ExecutorGetMethodResult,
+    RunTickTockArgs as ExecutorRunTickTockArgs,
+    EmulationResult as ExecutorEmulationResult,
+    RunTransactionArgs as ExecutorRunTransactionArgs,
+    ExecutorVerbosity,
 } from './executor/Executor';
 
 export {
