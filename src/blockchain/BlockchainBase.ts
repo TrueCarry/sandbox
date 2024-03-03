@@ -1,5 +1,5 @@
 import { defaultConfig } from "../config/defaultConfig";
-import { Address, Cell, Message, Transaction, ContractProvider, Contract, Sender, toNano, loadMessage, ShardAccount, TupleItem, ExternalAddress, StateInit } from "@ton/core";
+import { Address, Cell, Message, Transaction, ContractProvider, Contract, Sender, toNano, loadMessage, ShardAccount, TupleItem, ExternalAddress, StateInit, OpenedContract } from "@ton/core";
 import type { IExecutor, TickOrTock } from "../executor/Executor";
 import { BlockchainStorage, LocalBlockchainStorage } from "./BlockchainStorage";
 import { extractEvents, Event } from "../event/Event";
@@ -78,6 +78,17 @@ export type TreasuryParams = Partial<{
     balance: bigint,
     resetBalanceIfZero: boolean,
 }>
+
+export const SANDBOX_CONTRACT_SYMBOL = Symbol('SandboxContract')
+
+export function toSandboxContract<T>(contract: OpenedContract<T>): SandboxContract<T> {
+    if ((contract as any)[SANDBOX_CONTRACT_SYMBOL] === true) {
+        return contract as any
+    }
+
+    throw new Error('Invalid contract: not a sandbox contract')
+}
+
 
 const TREASURY_INIT_BALANCE_TONS = 1_000_000
 
@@ -362,12 +373,13 @@ export class BlockchainBase implements IBlockchain {
         })
     }
 
-    provider(address: Address, init?: { code: Cell, data: Cell }): ContractProvider {
+    provider(address: Address, init?: StateInit | null): ContractProvider {
         return new BlockchainContractProvider({
             getContract: (addr) => this.getContract(addr),
             pushMessage: (msg) => this.pushMessage(msg),
             runGetMethod: (addr, method, args) => this.runGetMethod(addr, method, args),
             pushTickTock: (on, which) => this.pushTickTock(on, which),
+            openContract: <T extends Contract>(contract: T) => this.openContract(contract) as OpenedContract<T>,
         }, address, init)
     }
 
@@ -412,7 +424,7 @@ export class BlockchainBase implements IBlockchain {
 
     openContract<T extends Contract>(contract: T) {
         let address: Address;
-        let init: { code: Cell, data: Cell } | undefined = undefined;
+        let init: StateInit | undefined = undefined;
 
         if (!Address.isAddress(contract.address)) {
             throw Error('Invalid address');
@@ -433,6 +445,10 @@ export class BlockchainBase implements IBlockchain {
 
         return new Proxy<any>(contract as any, {
             get(target, prop) {
+                if (prop === SANDBOX_CONTRACT_SYMBOL) {
+                    return true
+                }
+
                 const value = target[prop]
                 if (typeof prop === 'string' && typeof value === 'function') {
                     if (prop.startsWith('get')) {
