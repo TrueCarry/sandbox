@@ -4,7 +4,7 @@ export {
 } from './config/defaultConfig';
 
 export {
-    Blockchain,
+    BlockchainBase,
     SendMessageResult,
     BlockchainTransaction,
     PendingMessage,
@@ -13,7 +13,16 @@ export {
     ExternalOutInfo,
     BlockchainConfig,
     BlockchainSnapshot,
+    IBlockchain,
+} from './blockchain/BlockchainBase';
+
+export {
+    Blockchain
 } from './blockchain/Blockchain';
+
+export {
+    BlockchainWithExecutor
+} from './blockchain/BlockchainWithExecutor';
 
 export {
     BlockchainContractProvider,
@@ -48,8 +57,9 @@ export {
     EmulationError,
 } from './blockchain/SmartContract';
 
-export {
+export type {
     TickOrTock,
+    IExecutor,
 } from './executor/Executor';
 
 export {

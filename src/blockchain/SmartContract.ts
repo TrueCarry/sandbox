@@ -1,4 +1,4 @@
-import {Blockchain} from "./Blockchain";
+import type { IBlockchain } from "./BlockchainBase";
 import {
     Account,
     Address,
@@ -12,8 +12,8 @@ import {
     Transaction,
     TupleItem, TupleReader
 } from "@ton/core";
-import {getSelectorForMethod} from "../utils/selector";
-import { EmulationResult, ExecutorVerbosity, RunCommonArgs, TickOrTock } from "../executor/Executor";
+import { getSelectorForMethod } from "../utils/selector";
+import type { EmulationResult, ExecutorVerbosity, RunCommonArgs, TickOrTock } from "../executor/Executor";
 
 export function createShardAccount(args: { address?: Address, code: Cell, data: Cell, balance: bigint, workchain?: number }): ShardAccount {
     let wc = args.workchain ?? 0
@@ -154,13 +154,13 @@ export type SmartContractSnapshot = {
 
 export class SmartContract {
     readonly address: Address
-    readonly blockchain: Blockchain
+    readonly blockchain: IBlockchain
     #account: string
     #parsedAccount?: ShardAccount
     #lastTxTime: number
     #verbosity?: Partial<LogsVerbosity>
 
-    constructor(shardAccount: ShardAccount, blockchain: Blockchain) {
+    constructor(shardAccount: ShardAccount, blockchain: IBlockchain) {
         this.address = shardAccount.account!.addr
         this.#account = beginCell().store(storeShardAccount(shardAccount)).endCell().toBoc().toString('base64')
         this.#parsedAccount = shardAccount
@@ -225,11 +225,11 @@ export class SmartContract {
         this.#lastTxTime = account.account?.storageStats.lastPaid ?? 0
     }
 
-    static create(blockchain: Blockchain, args: { address: Address, code: Cell, data: Cell, balance: bigint }) {
+    static create(blockchain: IBlockchain, args: { address: Address, code: Cell, data: Cell, balance: bigint }) {
         return new SmartContract(createShardAccount(args), blockchain)
     }
 
-    static empty(blockchain: Blockchain, address: Address) {
+    static empty(blockchain: IBlockchain, address: Address) {
         return new SmartContract(createEmptyShardAccount(address), blockchain)
     }
 
@@ -272,8 +272,8 @@ export class SmartContract {
         }))
     }
 
-    protected runCommon(run: () => EmulationResult): SmartContractTransaction {
-        const res = run()
+    protected async runCommon(run: () => Promise<EmulationResult>): Promise<SmartContractTransaction> {
+        const res = await run()
 
         if (this.verbosity.print && this.verbosity.blockchainLogs && res.logs.length > 0) {
             console.log(res.logs)
@@ -305,12 +305,12 @@ export class SmartContract {
         }
     }
 
-    get(method: string | number, stack: TupleItem[] = [], params?: GetMethodParams): GetMethodResult {
+    async get(method: string | number, stack: TupleItem[] = [], params?: GetMethodParams): Promise<GetMethodResult> {
         if (this.account.account?.storage.state.type !== 'active') {
             throw new Error('Trying to run get method on non-active contract')
         }
 
-        const res = this.blockchain.executor.runGetMethod({
+        const res = await this.blockchain.executor.runGetMethod({
             code: this.account.account?.storage.state.state.code!,
             data: this.account.account?.storage.state.state.data!,
             methodId: typeof method === 'string' ? getSelectorForMethod(method) : method,
